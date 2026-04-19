@@ -27,18 +27,18 @@
     opacity: 0.2;
   }
 
-  input {
+  input, select {
     font-size: 2rem;
     text-align: center;
     background: black;
     color: white;
     border: 1px solid white;
-    width: 80px;
+    width: 70px;
   }
 
   .editor {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
   }
 </style>
@@ -60,9 +60,8 @@ let minutes = 32;
 let seconds = 55;
 
 const clockEl = document.getElementById("clock");
-const container = document.getElementById("container");
 
-// Format time (12h + AM/PM)
+// Format time (12h + AM/PM, NO seconds shown)
 function formatTime() {
   let h = hours % 12 || 12;
   let ampm = hours >= 12 ? "PM" : "AM";
@@ -119,12 +118,15 @@ function enterEditMode() {
 
   const h = hours % 12 || 12;
   const m = minutes.toString().padStart(2, "0");
+  const s = seconds.toString().padStart(2, "0");
 
   clockEl.innerHTML = `
     <div class="editor">
       <input id="h" type="number" min="1" max="12" value="${h}">
       :
       <input id="m" type="number" min="0" max="59" value="${m}">
+      :
+      <input id="s" type="number" min="0" max="59" value="${s}">
       <select id="ampm">
         <option ${hours >= 12 ? "" : "selected"}>AM</option>
         <option ${hours >= 12 ? "selected" : ""}>PM</option>
@@ -144,17 +146,19 @@ function enterEditMode() {
 function saveEdit() {
   const hInput = document.getElementById("h").value;
   const mInput = document.getElementById("m").value;
+  const sInput = document.getElementById("s").value;
   const ampm = document.getElementById("ampm").value;
 
   let h = parseInt(hInput);
   let m = parseInt(mInput);
+  let s = parseInt(sInput);
 
   if (ampm === "PM" && h !== 12) h += 12;
   if (ampm === "AM" && h === 12) h = 0;
 
   hours = h;
   minutes = m;
-  seconds = 0;
+  seconds = s;
 
   editMode = false;
   render();
