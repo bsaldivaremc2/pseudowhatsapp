@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom Clock</title>
+<style>
+  body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    user-select: none;
+  }
+
+  #clock {
+    font-size: 4rem;
+    padding: 20px;
+    border-radius: 10px;
+  }
+
+  .blink {
+    opacity: 0.2;
+  }
+
+  input {
+    font-size: 2rem;
+    text-align: center;
+    background: black;
+    color: white;
+    border: 1px solid white;
+    width: 80px;
+  }
+
+  .editor {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+</style>
+</head>
+<body>
+
+<div id="container">
+  <div id="clock"></div>
+</div>
+
+<script>
+let running = false;
+let editMode = false;
+let blink = false;
+
+// Default start time
+let hours = 3;
+let minutes = 32;
+let seconds = 55;
+
+const clockEl = document.getElementById("clock");
+const container = document.getElementById("container");
+
+// Format time (12h + AM/PM)
+function formatTime() {
+  let h = hours % 12 || 12;
+  let ampm = hours >= 12 ? "PM" : "AM";
+  let m = minutes.toString().padStart(2, "0");
+  return `${h}:${m} ${ampm}`;
+}
+
+// Render clock
+function render() {
+  if (!editMode) {
+    clockEl.textContent = formatTime();
+    clockEl.classList.toggle("blink", blink);
+  }
+}
+
+// Tick every second
+setInterval(() => {
+  blink = !blink;
+
+  if (running && !editMode) {
+    seconds++;
+    if (seconds >= 60) {
+      seconds = 0;
+      minutes++;
+      if (minutes >= 60) {
+        minutes = 0;
+        hours = (hours + 1) % 24;
+      }
+    }
+  }
+
+  render();
+}, 1000);
+
+// Toggle start/stop when tapping outside digits
+document.body.addEventListener("click", (e) => {
+  if (!clockEl.contains(e.target)) {
+    if (!editMode) {
+      running = !running;
+    }
+  }
+});
+
+// Enter edit mode when tapping clock
+clockEl.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (!editMode) {
+    enterEditMode();
+  }
+});
+
+function enterEditMode() {
+  editMode = true;
+
+  const h = hours % 12 || 12;
+  const m = minutes.toString().padStart(2, "0");
+
+  clockEl.innerHTML = `
+    <div class="editor">
+      <input id="h" type="number" min="1" max="12" value="${h}">
+      :
+      <input id="m" type="number" min="0" max="59" value="${m}">
+      <select id="ampm">
+        <option ${hours >= 12 ? "" : "selected"}>AM</option>
+        <option ${hours >= 12 ? "selected" : ""}>PM</option>
+      </select>
+    </div>
+  `;
+
+  const inputs = clockEl.querySelectorAll("input, select");
+
+  inputs.forEach(el => {
+    el.addEventListener("click", e => e.stopPropagation());
+    el.addEventListener("change", saveEdit);
+  });
+}
+
+// Save edited time
+function saveEdit() {
+  const hInput = document.getElementById("h").value;
+  const mInput = document.getElementById("m").value;
+  const ampm = document.getElementById("ampm").value;
+
+  let h = parseInt(hInput);
+  let m = parseInt(mInput);
+
+  if (ampm === "PM" && h !== 12) h += 12;
+  if (ampm === "AM" && h === 12) h = 0;
+
+  hours = h;
+  minutes = m;
+  seconds = 0;
+
+  editMode = false;
+  render();
+}
+
+// Initial render
+render();
+</script>
+
+</body>
+</html>
